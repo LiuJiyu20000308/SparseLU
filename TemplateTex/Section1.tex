@@ -1,0 +1,351 @@
+\section{Basic Concepts and Stationary Iterative Methods}
+
+\subsection{Review and Notations}
+\label{sec:1.1.1}
+
+\begin{nota}
+  We will write linear equations as
+  \begin{equation}
+    \label{eq:1.1}
+    Ax=b
+  \end{equation}
+  where $A$ is a nonsingular $N\times N$ matrix, $b\in\mathbb{R}^N$ is
+  given, and $$x^* = A^{-1}b\in \mathbb{R}^N$$
+  is to be found.
+\end{nota}
+
+\begin{nota}
+  Throughout this chapter, $x$ will denote a potential solution and
+  $\{x_k\}_{k>0}$ the sequence of iterates. We will denote the $i$th
+component of a vector $x$ by $(x)_i$ and the $i$th component of $x_k$
+by $(x_k)_i$.
+\end{nota}
+
+\begin{nota}
+  In this chapter, $\left\|\cdot\right\|$ will denote a norm on $\mathbb{R}^N$ as
+  well as the \emph{induced matrix norm}. We will denote the
+   \emph{condition number} of $A$ relative to the norm $\|\cdot\|$ by
+   $$\kappa(A)=\|A\|\|A^{-1}\|$$
+  where $\kappa(A)$ is understood to be infinite if $A$ is singular.
+\end{nota}
+
+\begin{defi}
+  Let $\|\cdot\|$ be a norm on $\mathbb{R}^N$. The \textsl{induced matrix norm}
+  of an $N\times N$ matrix $A$ is defined by
+  $$\|A\| = \max_{\|x\|=1}\|Ax\|.$$
+\end{defi}
+
+\begin{prop}
+  Induced norms have the important property that $\|Ax\|\leq\|A\|\|x\|$
+\end{prop}
+
+\begin{defi}
+  The \emph{error} of the \emph{iterative methods} is $$e = x - x^*$$
+\end{defi}
+
+\begin{defi}
+  The \emph{residual} of a potential solution $x$ to \eqref{eq:1.1}
+  is $$r=b-Ax$$
+\end{defi}
+
+\begin{lemma}
+  Let $b,\ x,\ x_0\in\mathbb{R}^N$. Let $A$ be nonsingular and let
+  $x^*=A^{-1}b$.
+  \begin{equation}
+    \label{eq:1.3}
+    \frac{\|e\|}{\|e_0\|}\leq\kappa(A)\frac{\|r\|}{\|r_0\|}.
+  \end{equation}
+\end{lemma}
+
+\begin{proof}
+  Since $$r=b-Ax=-Ae$$ we
+  have $$\|e\|=\|A^{-1}Ae\|\leq\|A^{-1}\|\|Ae\|=\|A^{-1}\|\|r\|$$
+  and $$\|r_0\|=\|Ae_0\|\leq\|A\|\|e_0\|.$$
+  Hence
+  \begin{equation*}
+    \frac{\|e\|}{\|e_0\|}\leq
+  \frac{\|A^{-1}\|r\|}{\|A\|^{-1}\|r_0\|}
+  =\kappa(A)\frac{\|r\|}{\|r_0\|}.\qedhere
+  \end{equation*}
+\end{proof}
+
+\begin{rmk}
+  Most iterative methods terminate when the residual is sufficiently
+  small. One termination criterion is
+  \begin{equation}
+    \label{eq:1.2}
+    \frac{\|r_k\|}{\|r_0\|}< \tau,
+  \end{equation}
+  It depends on the initial iterate and may result in unnecessary work
+  when the initial iterate is good and a poor result when the initial
+  iterate is far from the solution. For this reason we prefer to
+  terminate the iteration when
+  \begin{equation}
+    \label{eq:1.4}
+    \frac{\|r_k\|}{\|b\|}<\tau.
+  \end{equation}
+\end{rmk}
+
+\subsection{The Banach Lemma and approximate inverses}
+\label{sec:1.1.2}
+
+\begin{defi}
+  The \emph{Richardson iteration} for solving a linear system
+  \eqref{eq:1.1} is an iteration of the form
+  \begin{equation}
+    \label{eq:1.6}
+    x_{k+1} = (I-A)x_k + b.
+  \end{equation}
+  We will discuss more general methods in which $\{x_k\}$ is given by
+  \begin{equation}
+    \label{eq:1.7}
+    x_{k+1}=Mx_k + c.
+  \end{equation}
+\end{defi}
+
+\begin{defi}
+  Iterative methods of form \eqref{eq:1.6} and \eqref{eq:1.7} are
+  called \emph{stationary iterative methods}.
+\end{defi}
+\begin{rmk}
+  The Richardson iteration is equivalent to the fixed-point iteration
+  for $f(x)=(I-A)x+b.$
+\end{rmk}
+\begin{rmk}
+  The transition from $x_k$ to $x_{k+1}$ does not depend on the
+  history of the iteration. The Krylov methods discussed in next two
+  sections are not stationary iterative methods.
+\end{rmk}
+
+\begin{lemma}
+  If $M$ is an $N\times N$ matrix with $\|M\|<1$ then $I-M$ is
+  \emph{nonsingular} and
+  \begin{equation}
+    \label{eq:1.8}
+    \|(I-M)^{-1}\|\leq \frac{1}{1-\|M\|}.
+  \end{equation}
+\end{lemma}
+
+\begin{proof}
+  We will show that $I-M$ is nonsingular and that \eqref{eq:1.8} holds
+  by showing that the series $$\sum\limits_{l=0}^{\infty}M^l =
+  (I-M)^{-1}.$$
+  The partial sums $$S_k=\sum\limits_{l=0}^kM^l$$
+  form a Cauchy sequence in $\mathbb{R}^{N\times N}$. To see this, note
+  that for all $m>k$,
+  $$\|S_k-S_m\|\leq\sum\limits_{l=k+1}^m\|M\|^l = \|M\|^{k+1}\left(
+    \frac{1-\|M\|^{m-k}}{1-\|M\|}\right) \rightarrow 0$$
+  as $m,k\rightarrow\infty$. Hence the sequence $S_k$ converges, say
+  to S. Since $MS_k+I=S_{k+1}$, we have $MS+I=S$.
+  $$\|(I-M)^{-1}\|\leq\sum\limits_{l=0}^{\infty}\|M\|^l=(1-\|M\|)^{-1},$$
+  so we prove that $I-M$ is nonsingular and $S=(I-M)^{-1}$.
+\end{proof}
+
+\begin{coro}
+  If $\|M\|<1$ then the iteration \eqref{eq:1.7} converges to
+  $x=(I-M)^{-1}c$ for all initial iterates $x_0$.
+\end{coro}
+
+\begin{rmk}
+  A consequence of Corollary 1.1.12 is that Richardson iteration
+  \eqref{eq:1.6} will converge if $\|I-A\|<1$. It is sometimes
+  possible to \emph{precondition} a linear equation by multiplying both sides
+  of \eqref{eq:1.1} by a matrix $B$ $$BAx=Bb$$
+  so that convergence of iterative methods is improved.
+\end{rmk}
+
+\begin{defi}
+  $B$ is an \emph{approximate inverse} of $A$ if $\|I-BA\|<1$.
+\end{defi}
+
+\begin{rmk}
+  The approximate inverse allows us to apply the Banach lemma and its
+  corollary to the preconditioned Richardson iteration.
+\end{rmk}
+
+\begin{thm}
+  If $A$ and $B$ are $N\times N$ matrices and $B$ is an approximate
+  inverse of $A$, then $A$ and $B$ are both nonsingular and
+  \begin{equation}
+    \label{eq:1.9}
+    \|A^{-1}\|\leq\frac{\|B\|}{1-\|I-BA\|},\ \  \|B^{-1}\|\leq\frac{\|A\|}{1-\|I-BA\|},
+  \end{equation}
+  and
+  \begin{equation}
+    \label{eq:1.10}
+    \|A^{-1}-B\|\leq\frac{\|B\|\|I-BA\|}{1-\|I-BA\|},\ 
+    \|A-B^{-1}\|\leq\frac{\|A\|\|I-BA\|}{1-\|I-BA\|}.
+  \end{equation}
+\end{thm}
+
+\begin{proof}
+  Let $M=I-BA$. By Lemma 1.1.11 $I-M=I-(I-BA)=BA$ is nonsingular. Hence
+  both $A$ and $B$ are nonsingular. By \eqref{eq:1.8}
+  \begin{equation}
+    \label{eq:1.11}
+    \|A^{-1}B^{-1}\|=\|(I-M)^{-1}\|\leq\frac{1}{1-\|M\|}=\frac{1}{1-\|I-BA\|}.
+  \end{equation}
+  Since $A^{-1}=(I-M)^{-1}B$, inequality \eqref{eq:1.11} implies the
+  first part of \eqref{eq:1.9}. The second part follows in a similar
+  way from $B^{-1}=A(I-M)^{-1}$.
+
+  To complete the proof note that
+  $$A^{-1}-B=(I-BA)A^{-1},\ A-B^{-1}=-B^{-1}(I-BA).$$
+  and use \eqref{eq:1.9}.
+\end{proof}
+
+\begin{rmk}
+  Richardson iteration, preconditioned with approximate inversion, has
+  the form
+  \begin{equation}
+    \label{eq:1.12}
+    x_{k+1}=(I-BA)x_k +Bb.
+  \end{equation}
+  If the norm of $I-BA$ is small, then not only will the iteration
+  converge rapidly, but, as Lemma 1.1.8 indicates, termination
+  decisions based on the preconditioned residual $Bb-BAx$ will better
+  reflect the actual error.
+\end{rmk}
+
+\begin{rmk}
+  There are many approaches to precondition the linear equations. For
+  example, multigrid methods can also be interpreted in this light.
+\end{rmk}
+
+\subsection{The spectral radius}
+\label{sec:1.3}
+\begin{exm}
+  The norm of $M$ could be small in some norms and quite large in
+  others. For example, letting
+  $$
+  M=\left[\begin{array}{cccc}
+    0.5 & 0.5 & 0.5 & 0.5 \\
+    0 & 0.25 & 0 & 0 \\
+    0 & 0 & 0.25 & 0 \\
+    0 & 0 & 0 & 0.25
+  \end{array}\right]
+  $$
+  $\|M\|_1=0.75,\|M\|_{\infty}=2$
+\end{exm}
+
+\begin{rmk}
+  The analysis in \ref{sec:1.1.2} related convergence of the iteration
+  \eqref{eq:1.7} to the norm of the matrix $M$. However the norm of $M$
+  could be small in some norms and quite large in others.
+\end{rmk}
+
+\begin{nota}
+  We let $\sigma(A)$ denote the set of eigenvalues of $A$.
+\end{nota}
+
+\begin{defi}
+  The \emph{spectral radius} of an $N\times N$ matrix $A$ is
+  \begin{equation}
+    \label{eq:1.13}
+    \rho(A)= \max_{\lambda\in\sigma(A)}|\lambda| =
+    \lim\limits_{n\rightarrow\infty}\|A^{n}\|^{1/n}
+  \end{equation}
+\end{defi}
+
+\begin{lemma}
+  For any induced matrix norm, we have
+  \begin{equation}
+    \label{eq:1.14}
+    \rho(A)\leq \|A\|.
+  \end{equation}
+\end{lemma}
+
+\begin{thm}
+  Let $A$ be an $N\times N$ matrix. Then for any $\epsilon>0$, there is
+  a norm $\|\cdot\|$ on $\mathbb{R}^N$ such that $$\rho(A)>\|A\|-\epsilon.$$
+\end{thm}
+
+
+\begin{thm}
+  Let $M$ be an $N\times N$ matrix. The iteration \eqref{eq:1.7}
+  converges for all $c\in\mathbb{R}^N$ if and only if $\rho(M)<1.$
+\end{thm}
+
+\begin{thm}
+  If $\rho(M)\geq 1$ then there are some $x_0$ and $c$ such that the
+  iteration \eqref{eq:1.7} fails to converge.
+\end{thm}
+
+\begin{rmk}
+  A consequence of Theorem 1.1.19, 1.1.20 and Lemma 1.1.11 is a
+  characterization of convergent stationary iterative methods.
+\end{rmk}
+
+
+\subsection{Matrix splittings and classical stationary iterative
+  methods}
+\label{sec:1.4}
+
+\begin{defi}
+  Methods such as Jacobi, Gauss-Seidel, and successive overrelaxation
+  (SOR) iteration are based on \emph{splittings} of $A$ of the
+  form $$A=A_1+A_2,$$
+  where $A_1$ is a nonsingular matrix constructed so that equations
+  with $A_1$ as coefficient matrix are easy to solve. Then $Ax=b$ is
+  converted to the fixed-point problem $$x=A_1^{-1}(b-A_2x).$$
+\end{defi}
+
+\begin{rmk}
+  The analysis of the method is based on an estimation of the spectral
+  radius of the iteration matrix $M=A_1^{-1}A_2.$
+\end{rmk}
+
+\begin{exm}
+  We consider the Jacobi iteration that uses the splitting $$A_1=D,\
+  A_2=L+U,$$
+  where $D$ is the diagonal of $A$, $L$ and $U$ are the (strict) lower
+  and upper triangular parts. This leads to the iteration
+  matrix $$M_{JAC}=-D^{-1}(L+U).$$
+  Letting $(x_k)_i$ denote the $i$th component of the $k$th iterate we
+  can express Jacobi iteration concretely as
+  \begin{equation}
+    \label{eq:1.15}
+    (x_{k+1})_i = a_{ii}^{-1}\left( b_i-\sum\limits_{j\neq i}a_{ij}(x_k)_j\right).
+  \end{equation}
+  We will  present the convergence result for Jacobi iterative method.
+  \begin{thm}
+    Let $A$ be an $N\times N$ matrix and assume that for all $1\leq
+    i\leq N$
+    \begin{equation}
+      \label{eq:1.16}
+      0<\sum\limits_{j\neq i}|a_{ij}|<|a_{ii}|.
+    \end{equation}
+    Then $A$ is nonsingular and the Jacobi iteration \eqref{eq:1.15}
+    converges to $x^*=A^{-1}b$ for all $b$.
+  \end{thm}
+
+  \begin{proof}
+    Note that the $i$th row sum of $M=M_{JAC}$ satisfies
+    $$\sum\limits_{j=1}^N|m_{ij}| = \frac{\sum_{j\neq
+        i}|a_{ij}|}{|a_{ii}|}<1.$$
+    Hence $\|M_{JAC}\|_{\infty}<1$ and the iteration converges to the
+    unique solution of $x=Mx+D^{-1}b.$ Also $I-M = D^{-1}A$ is
+    nonsingular and therefore $A$ is nonsingular.
+  \end{proof}
+\end{exm}
+
+\begin{exm}
+  Gauss-Seidel iteration overwrites the approximate solution with the
+  new value as soon as it is computed. This results in the iteration
+  $$(x_{k+1})_i=a_{ii}^{-1}\left(b_i-\sum\limits_{j<i}a_{ij}(x_{k+1})_j-
+    \sum\limits_{j>i}a_{ij}(x_k)_j\right)$$
+  the splitting $$A_1=D+L,\ A_2=U,$$
+  and iteration matrix $$M_{GS}=-(D+L)^{-1}U.$$
+\end{exm}
+
+\begin{rmk}
+  We can view these methods as a preconditioned Richardson
+  iteration. For the Jacobi iteration, the approximate
+  inverse $$B_{JAC}=D^{-1}.$$
+  For Gauss-Seidel iteration,$$B_{GS}=(D+L)^{-1}.$$
+\end{rmk}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "GMRES_MathDocument"
+%%% End:

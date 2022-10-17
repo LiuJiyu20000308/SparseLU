@@ -1,0 +1,453 @@
+\section{Numerical consideration}
+\begin{defn}
+    \label{defn::stabledefn}
+    To study the effect of arithmetic errors on the solution 
+    of sets of questions, we mainly need to answer two 
+    questions:
+    \begin{enumerate}[(i)]
+        \item Is the computed solution $\tilde{\mx}$ the exact 
+        solution of a `nearby' problem?
+        \item If small changes are made to the given problem, 
+        are changes in the exact solution also small?
+    \end{enumerate}
+    A positive answer to the first question means the error in 
+    the computed solution is no greater than what would result 
+    from making small pertubations to the original problem and 
+    then solving the pertubed problem exactly. In this case, we 
+    say that the algorithm is \textit{stable}.
+
+    If the answer to the second question is positive, we say 
+    that the problem is \textit{well-conditioned}. Conversly, 
+    when small changes in the data produce large changes in the 
+    solution, we say the problem is \textit{ill-conditioned}. 
+    This is a property of the problem and has nothing to do 
+    with the method used to solve it.
+\end{defn}
+
+\begin{defn}
+    Define the \textit{factorization-error matrix}
+    $$
+        \mathbf{H}=\tilde{\mL}\tilde{\mU}-\mA,
+    $$ 
+    where $\tilde{\mL}\tilde{\mU}$ is the numerical 
+    factorization of $\mA$.
+\end{defn}
+
+\subsection{Controlling algorithm stability through pivoting}
+\begin{exm}
+    \label{exm::unstable}
+    In Example \ref{exm::instable}, we have showed that 
+    using Gaussian elimination without pivoting to solve
+    $$
+        \begin{bmatrix}
+            0.001&2.42\\1.00&1.58
+        \end{bmatrix}
+        \begin{bmatrix}
+            x_1\\x_2
+        \end{bmatrix}=
+        \begin{bmatrix}
+            5.20\\4.57
+        \end{bmatrix}
+    $$ 
+    with our hypothetical 3-digit computer cause large error 
+    in the solution. Furthermore, the factorization-error 
+    matrix
+    $$
+        \mathbf{H}=
+        \begin{bmatrix}
+            0.0&0.0\\0.0&-1.58
+        \end{bmatrix}
+    $$ 
+    is not small relative to $\mA$. The residual is
+    $$
+        \mathbf{r}=\mathbf{b}-\mA\tilde{\mx}=
+        \begin{bmatrix}
+            -0.003\\1.173
+        \end{bmatrix},
+    $$ 
+    whose norm is not small compared with $\|\mathbf{b}\|$. So 
+    we conclude that our algorithm is unstable.
+
+    Note that the damage that lead to the inaccurate 
+    factorization is that it treats $1.58$ as zero, the reason 
+    that it do so was the large growth in size that take place 
+    in forming $a_{22}^{(2)}$ from $a_{22}$.  
+\end{exm}
+
+\begin{thm}
+    \textit{Backward error analysis} shows that Gaussian 
+    elimination is stable provided the growth in Example 
+    \ref{exm::unstable} does not take place, actually we 
+    have the inequality
+    $$
+        |h_{ij}|\leq 5.01\epsilon_u n\max_k|a_{ij}^{(k)}|,
+    $$ 
+    where $\epsilon_u$ is the unit roundoff ($\epsilon_u=0.005$ 
+    in our hypothetical 3-digit computer) and $n$ is the 
+    dimenson of the matrix. However, it is not practical to 
+    control the sizes of all the coefficients $a_{ij}^{(k)}$, 
+    we usually weaken the inequality to the bound
+    \begin{equation}
+        \label{eq::H-bound}
+        |h_{ij}|\leq5.01\epsilon_u n\rho,
+    \end{equation}
+    where
+    $$
+        \rho=\max_{i,j,k}|a_{ij}^{(k)}|.
+    $$ 
+\end{thm}
+\begin{proof}
+    See \cite{Reid1971} combined with our wider bound on 
+    rounding error.
+\end{proof}
+
+\begin{exm}[Partial pivoting]
+    In practice, Gaussian elimination with partial pivoting is 
+    considered to be a stable algorithm. This is based on 
+    experience rather than rigorous analysis, since the best 
+    a priori bound that can be given for a dense matrix is
+    $$
+        \rho\leq 2^{n-1}\max_{i,j}|a_{ij}|.
+    $$ 
+    This bound is easy to establish, but generally very 
+    pessimistic, particularly in the case where $n$ is very 
+    large.
+\end{exm}
+
+\begin{exm}[Threshold pivoting]
+    While we want to control the size of the multiplier, we 
+    may find asking $|a_{kk}^{(k)}|\geq |a_{ik}^{(k)}|,\,i>k$ 
+    overly restrictive when other factors need to be taken into 
+    account, for example, sparsity or moving data in and out of 
+    cache. The compromise strategy is \textit{threshold 
+    pivoting} which requires the inequality
+    $$
+        |a_{kk}^{(k)}|\geq u|a_{ik}^{(k)}|,\,i>k,
+    $$ 
+    where $u$, the \textit{threshold parameter}, is a value in 
+    the range $0<u\leq 1$. Partial pivoting can be regarded as 
+    a special threshold pivoting with $u=1$. The growth bound 
+    of threshold pivoting is
+    $$
+        \rho\leq(1+u^{-1})^{n-1}\max_{i,j}|a_{i,j}|.
+    $$ 
+\end{exm}
+
+\begin{exm}[Rook pivoting]
+    Partial pivoting or threshold pivoting only limit the size 
+    of the multiplier, however, a small multiplier can produce 
+    a relatively large addition to an entry in the lower 
+    submatrix if an entry in the row is much larger than the 
+    pivot. \textit{Rook pivoting} find the new pivot satisfied
+    $$
+        |a_{kk}^{(k)}|\geq\max\{|a_{ik}^{(k)}|,|a_{ki}^{(k)}|\},
+        \,i>k.
+    $$ 
+    This limit the size both of the multiplier and the entry in 
+    the row. \cite{Foster1997} has shown that, for rook 
+    pivoting, the growth is bounded by
+    $$
+        \rho\leq 1.5n^{3/4\log(n)}\max_{i,j}|a_{i,j}|.
+    $$ 
+\end{exm}
+
+\begin{exm}[Full pivoting]
+    For full pivoting, \cite{Wilkinson1961} has obtained that 
+    \begin{align*}
+        \rho&\leq f(n)\max_{i,j}|a_{ij}|\\
+        &=\sqrt{n(2^13^{1/2}\ldots n^{1/(n-1)})}\max_{i,j}|a_{ij}|.
+    \end{align*}
+    Note that $f(n)$ is much more smaller than $2^{n-1}$ for 
+    large $n$.
+\end{exm}
+
+\begin{exm}[SPD case]
+    When matrix $\mA$ is SPD, things will be different. 
+    \cite{Wilkinson1961} has shown that using Gaussian 
+    elimination without pivoting causes no growth i.e.
+    $$
+        \rho=\max_{i,j,k}|a_{ij}^{(k)}|\leq\max_{i,j}|a_{ij}|.
+    $$ 
+    So we do not need to consider pivoting when factorize a 
+    SPD matrix.
+\end{exm}
+
+\begin{exm}[Diagonally dominant case]
+    When $\mA$ is diagonally dominant, we can show that
+    $$
+        \rho=\max_{i,j,k}|a_{i,j}^{(k)}|\leq 
+        2\max_{i,j}|a_{i,j}|.
+    $$ 
+    (Hint: show that $\mA^{(2)}$ is still diagonally dominant 
+    and $\sum_{j=2}^n|a_{ij}^{(2)}|\leq\sum_{j=1}^n|a_{ij}|$.)
+\end{exm}
+
+\subsection{Monitoring the stability}
+\begin{defn}
+    Since it is easy to compute $\mathbf{r}=\mathbf{b}-\mA\mx$, 
+    and in practice this measure for the stability of the 
+    solution is usually employed. We mainly compare 
+    $\|\mathbf{r}\|$ with $\|\mathbf{b}\|$ or $\|\mA\|
+    \|\tilde{\mx}\|$ to monitor the stability.
+
+    If $\|\mathbf{r}\|$ is small compared with $\|\mathbf{b}\|$, 
+    then we have solved a nearby problem since $\mA\tilde{\mx}=
+    \mathbf{b}-\mathbf{r}$. By the first question in Definition 
+    \ref{defn::stabledefn}, our method is stable.
+
+    If $\|\mathbf{r}\|$ is small compared with $\|\mA\|
+    \|\tilde{\mx}\|$, then $\tilde{\mx}$ is the exact solution 
+    of the equation $(\mA+\mathbf{H})\tilde{\mx}=\mathbf{b}$ 
+    where $\|\mathbf{H}\|$ is small compared with $\|\mA\|$. 
+    By the first question in Definition \ref{defn::stabledefn}, 
+    our method is stable.
+
+    Thus, if $\|\mathbf{r}\|$ is small compared with 
+    $\|\mathbf{b}\|$, $\|\mA\tilde{\mx}\|$, or $\|\mA\|
+    \|\tilde{\mx}\|$, we have done a good job in solving the 
+    equation.
+\end{defn}
+
+\subsection{Ill-conditioning}
+\begin{exm}
+    Suppose the matrix $\mA$ is ill-conditioned, for example, 
+    there are two vector $\mathbf{v}$ and $\mathbf{w}$ 
+    satisfied
+    $$
+        \|\mathbf{v}\|=\|\mathbf{w}\|,\,\|\mA\mathbf{v}\|
+        \gg \|\mA\mathbf{w}\|.
+    $$ 
+    $\mathbf{v}$ is the solution of $\mA\mx=\mathbf{b}$, where 
+    $\mathbf{b}=\mA\mathbf{v}$. Now we change $\mathbf{b}$ by 
+    the vector $\mA\mathbf{w}$ which is relatively small but 
+    the corresponding solution changes a lot. 
+
+    Clearly, the amount of ill-conditioning is dependent on 
+    $\|\mA\mathbf{v}\|/\|\mA\mathbf{w}\|$, this ratio can be 
+    written in the form
+    $$
+        \frac{\|\mA\mathbf{v}\|}{\|\mA\mathbf{w}\|}=
+        \frac{\|\mA\mathbf{v}\|}{\|\mA\mathbf{w}\|}
+        \frac{\|\mathbf{w}\|}{\|\mathbf{v}\|}=
+        \frac{\|\mA\mathbf{v}\|}{\|\mathbf{v}\|}
+        \frac{\|\mA^{-1}\mathbf{y}\|}{\|\mathbf{y}\|},
+    $$ 
+    where $\mathbf{y}=\mA\mathbf{w}$. The right hand side has 
+    an upper bound $\|\mA\|\|\mA^{-1}\|$.
+\end{exm}
+
+\begin{defn}[Condition number]
+    The quantity
+    $$
+        \kappa(\mA)=\|\mA\|\|\mA^{-1}\|
+    $$ 
+    is known as the \textit{condition number} of $\mA$.
+\end{defn}
+
+\begin{thm}
+    For the general problem $\mA\mx=\mathbf{b}$, we consider 
+    its backward error. Assume $\mathbf{b}$ is perturbed by 
+    $\mathbf{\delta b}$ and the corresponding pertubation of 
+    $\mx$ is $\mathbf{\delta x}$ so that equation
+    $$
+        \mA(\mx+\mathbf{\delta x})=\mathbf{b}+\mathbf{\delta b}
+    $$ 
+    holds. Then the relative error can be controlled by
+    $$
+        \frac{\|\mathbf{\delta x}\|}{\|\mx\|}\leq \kappa(\mA)
+        \frac{\|\mathbf{\delta b}\|}{\|\mathbf{b}\|}.
+    $$ 
+\end{thm}
+
+\begin{thm}
+    Now we consider the backward error for the matrix term. 
+    Let the perturbed equation be
+    $$
+        (\mA+\mathbf{\delta A})(\mx+\mathbf{\delta x})=
+        \mathbf{b}.
+    $$ 
+    Then the relative error can be controlled by
+    $$
+        \frac{\|\mathbf{\delta x}\|}{\|\mx+\mathbf{\delta x}\|}
+        \leq \kappa(\mA)\frac{\|\mathbf{\delta A}\|}{\|\mA\|}.
+    $$ 
+\end{thm}
+
+\begin{thm}
+    When we consider the perturbation of $\mA$ and $\mathbf{b}$ 
+    at the same time, we have the equation
+    $$
+        (\mA+\mathbf{\delta A})(\mx+\mathbf{\delta x})=
+        \mathbf{b}+\mathbf{\delta b}.
+    $$ 
+    When $\|\mA^{-1}\|\|\mathbf{\delta A}\|<1$, we have
+    $$
+        \frac{\|\mathbf{\delta x}\|}{\|\mx\|}
+        \leq \frac{\kappa(\mA)}{1-\kappa(\mA)
+        \frac{\|\mathbf{\delta A}\|}{\|\mA\|}}
+        \left[\frac{\|\mathbf{\delta b\|}}{\|\mathbf{b}\|}
+        +\frac{\|\mathbf{\delta A}\|}{\|\mA\|}\right].
+    $$ 
+\end{thm}
+\begin{proof}
+    \begin{align*}
+        &(\mA+\mathbf{\delta A})(\mx+\mathbf{\delta x})=
+        \mathbf{b}+\mathbf{\delta b},\\
+        \Rightarrow&\mA\mathbf{\delta x}=\mathbf{\delta b}
+        -\mathbf{\delta A}\mx-\mathbf{\delta A}
+        \mathbf{\delta x},\\
+        \Rightarrow&\|\mathbf{\delta x}\|\leq\|\mA^{-1}\|
+        (\|\mathbf{\delta b}\|+\|\mathbf{\delta A}\|\|\mx\|
+        +\|\mathbf{\delta A}\|\|\mathbf{\delta x}\|),\\
+        \Rightarrow&\|\mathbf{\delta x}\|(1-\|\mA^{-1}\|
+        \|\mathbf{\delta A}\|)\\&\leq \|\mA^{-1}\|(\|
+        \mathbf{\delta b}\|+\|\mathbf{\delta A}\|\|\mx\|).
+    \end{align*}
+    Provided the inequality $\|\mA^{-1}\|\|\mathbf{\delta A}\|
+    <1$ holds, we deduce the relation
+    $$
+        \|\mathbf{\delta x}\|\leq\frac{\|\mA^{-1}\|}
+        {1-\|\mA^{-1}\|\|\mathbf{\delta A}\|}(\|
+        \mathbf{\delta b}\|+\|\mathbf{\delta A}\|\|\mx\|)
+    $$ 
+    for the absolute error. For the relative error, we divide 
+    this by $\|\mx\|$ and use the inequality $\|\mathbf{b}\|
+    \leq\|\mA\|\|\mx\|$ to give the inequality
+    $$
+    \frac{\|\mathbf{\delta x}\|}{\|\mx\|}
+    \leq \frac{\kappa(\mA)}{1-\kappa(\mA)
+    \frac{\|\mathbf{\delta A}\|}{\|\mA\|}}
+    \left[\frac{\|\mathbf{\delta b\|}}{\|\mathbf{b}\|}
+    +\frac{\|\mathbf{\delta A}\|}{\|\mA\|}\right].
+    $$ 
+\end{proof}
+
+\begin{defn}[Scaling]
+    \textit{Scaling} is to select two diagonal matrices 
+    $\mathbf{D}_1$ and $\mathbf{D}_2$ such that
+    $\mathbf{D}_1\mA\mathbf{D}_2$
+    has a smaller condition number than $\mA$.
+\end{defn}
+
+\begin{exm}
+    \label{exm::conditionnum}
+    The condition number is very dependent on scaling. Consider 
+    the identity matrix with the last diagonal entry replaced 
+    by a small number $\delta$, then $\kappa(\mA)$ will be 
+    around $1/\delta$. However, if the matrix is scaled to make 
+    its last entry $1$, the condition number of the scaled 
+    matrix is just $1$.
+\end{exm}
+
+\subsection{Strategies to improve the accuracy}
+\begin{alg}[Iterative refinement]
+    Let $\mx^{(1)}$ be the computed solution to $\mA\mx=
+    \mathbf{b}$, let the residual vector be
+    $$
+        \mathbf{r}^{(1)}=\mathbf{b}-\mA\mx^{(1)}.
+    $$ 
+    Formally, we observe the relations
+    $$
+        \mA^{-1}\mathbf{r}^{(1)}=\mA^{-1}\mathbf{b}-\mx^{(1)}
+        =\mx-\mx^{(1)}.
+    $$ 
+    Hence, we may find a correction $\Delta\mx^{(1)}$ to $\mx$ 
+    by solving 
+    $$
+        \mA\Delta\mx^{(1)}=\mathbf{r}^{(1)}.
+    $$ 
+    In practive, of course, we can not solve this exactly, but 
+    we may construct a new approximation solution
+    $$
+        \mx^{(2)}=\mx^{(1)}+\Delta \mx^{(1)},
+    $$ 
+    and, in general, define an iteration with steps
+    \begin{align*}
+        &r^{(k)}=\mathbf{b}-\mA\mx^{(k)},\\
+        &\textrm{solve}\quad\mA\Delta \mx^{(k)}=\mathbf{r}^{(k)},\\
+        &\mx^{(k+1)}=\mx^{(k)}+\Delta\mx^{(k)},
+    \end{align*}
+    for $k=1,2,\ldots\,$.
+\end{alg}
+
+\begin{alg}[Automatic scaling]
+    \label{alg::autoscale1}
+    A practical automatic scaling algorithm is to make all 
+    entries are close to $1$. Let $\mathbf{D}_1=
+    \mathrm{diag}(e^{-\rho_i})$ and $\mathbf{D}_2=\mathrm{diag}
+    (e^{-\gamma_j})$, where $\rho_i$ and $\gamma_i,\,i=1,2,\ldots,
+    n$ are chosen to  minimize
+    \begin{equation}
+        \label{eq::scalinglog}
+        \sum_{a_{ij}\neq 0}(\log|a_{ij}|-\rho_i-\gamma_j)^2.
+    \end{equation}
+    Then $\mathbf{D}_1\mA\mathbf{D}_2$ has the logarithms of 
+    its nonzeros as small as possible in the least-squares 
+    sense. The minimization of \eqref{eq::scalinglog} is a 
+    linear least-squares problem, which can be solved 
+    effectively by CG.
+\end{alg}
+
+\begin{alg}[Automatic scaling]
+    \label{alg::autoscale2}
+    Another approach to scaling is to use an iterative 
+    technique to make the infinity norms of all the rows and 
+    columns close to one. \cite{Ruiz2014} acheive this by 
+    repeatedly scaling the rows and columns by the square roots 
+    of their norms. Starting with $\mA^{\{0\}}=\mA$ and 
+    $$
+        a_{ij}^{\{k+1\}}=\|a_{i:}^{\{k\}}\|_\infty^{-1/2}
+        a_{ij}^{\{k\}}\|a_{:j}^{\{k\}}\|_\infty^{-1/2}.
+    $$ 
+    Since any element of $\mA^{\{k\}}$ is less than the norm of 
+    its row or column, all entries of $\mA^{\{k\}},\,k\geq 1$ 
+    are less than $1$ in absolute value. If $a_{il}^{\{k\}}$ is 
+    the largest entry in row $i$, then
+    $$
+        |a_{il}^{\{k+1\}}|=\|a_{i:}^{\{k\}}\|_\infty^{1/2}
+        \|a_{:l}^{\{k\}}\|_\infty^{-1/2}\geq
+        \|a_{i:}^{\{k\}}\|_\infty^{1/2}.
+    $$ 
+    It follows that the norm of row $i$ converge to $1$ because
+    $$
+        \|a_{i:}^{\{k+1\}}\|_\infty\geq
+        \|a_{i:}^{\{k\}}\|_\infty^{1/2}\geq
+        \|a_{i:}^{\{k\}}\|_\infty.
+    $$ 
+    A similar results applies for the columns. Ruiz stops the 
+    iteration when
+    \begin{align*}
+        &\max_{1\leq i\leq n}\left|1-\|a_{i:}^{\{k\}}\|_\infty
+        \right|\leq\epsilon \,\mathrm{and} \\
+        &\max_{1\leq j\leq n}\left|1-\|a_{:j}^{\{k\}}\|_\infty
+        \right|\leq\epsilon.
+    \end{align*}
+\end{alg}
+
+\begin{exm}
+    For the matrix
+    $$
+        \mA=
+        \begin{bmatrix}
+            1.00&2420\\1.00&1.58
+        \end{bmatrix},
+    $$ 
+    the algorithm \ref{alg::autoscale1} yields the scaled matrix
+    $$
+        \mathbf{D}_1\mA\mathbf{D}_2=
+        \begin{bmatrix}
+            0.1598&6.2559\\6.2559&0.1598
+        \end{bmatrix}.
+    $$ 
+    The algorithm \ref{alg::autoscale2} yields the scaled matrix
+    $$
+    \mathbf{D}_1\mA\mathbf{D}_2=
+    \begin{bmatrix}
+        0.0228&1\\1&0.0286
+    \end{bmatrix}.
+    $$ 
+\end{exm}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "LU_MathDocument"
+%%% End:
